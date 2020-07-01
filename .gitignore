@@ -1,5 +1,6 @@
 output.png
-VGG19_normalized_pytorch
+VGG_ave_pool_deploy.prototxt
+vgg_normalised.caffemodel
 
 # Created by https://www.toptal.com/developers/gitignore/api/python,visualstudiocode
 # Edit at https://www.toptal.com/developers/gitignore?templates=python,visualstudiocode
