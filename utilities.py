@@ -4,6 +4,9 @@ import imp
 import inspect
 import importlib
 
+from PIL import Image
+import torchvision
+
 
 def save_model(model, path):
     """
@@ -11,6 +14,7 @@ def save_model(model, path):
     Restore the model(s) with load_model. References to other modules
     are not chased; they're assumed to be available when calling load_model.
     The state of any other object in the module is not stored.
+    Written by Pauli Kemppinen.
     """
     model_pickle = pickle.dumps(model)
 
@@ -34,7 +38,10 @@ def save_model(model, path):
 
 
 def load_model(path):
-    """Loads the model(s) stored by save_model."""
+    """
+    Loads the model(s) stored by save_model.
+    Written by Pauli Kemppinen.
+    """
     modules, model_pickle = pickle.load(open(path, 'rb'))
 
     # Temporarily add or replace available modules with stored ones.
@@ -74,3 +81,21 @@ def load_model(path):
             sys.modules.pop(name)
 
     return model
+
+
+def load_image(path):
+    return Image.open(path)
+
+
+def preprocess_image(image):
+    transform = torchvision.transforms.Compose(
+        [
+            torchvision.transforms.ToTensor()
+        ]
+    )
+
+    return transform(image)
+
+
+def gram_matrix(activations):
+    raise NotImplementedError()
