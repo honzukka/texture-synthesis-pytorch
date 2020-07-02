@@ -166,7 +166,7 @@ def get_optimizer(opt_img):
 def run_style_transfer(
     net, normalization_mean, normalization_std,
     content_img, style_img, opt_img,
-    n_steps=300, style_weight=1*1000*1000, content_weight=1
+    n_steps=20, style_weight=1*1000*1000, content_weight=1
 ):
     print('Building the style transfer model...')
     model, style_losses, content_losses = get_style_model_and_losses(

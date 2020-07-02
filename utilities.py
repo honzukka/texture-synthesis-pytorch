@@ -5,7 +5,6 @@ import inspect
 import importlib
 
 import PIL
-import torchvision
 import torch
 import numpy as np
 
@@ -118,4 +117,7 @@ def preprocess_image(
 
 
 def gram_matrix(activations):
-    raise NotImplementedError()
+    b, n, x, y = activations.size()
+    activation_matrix = activations.view(b * n, x * y)
+    G = torch.mm(activation_matrix, activation_matrix.t())    # gram product
+    return G.div(b * n * x * y)     # normalization
