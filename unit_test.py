@@ -1,5 +1,6 @@
 import h5py
 import torch
+import torchvision
 
 import utilities
 from model import Model
@@ -57,7 +58,9 @@ class TestModelWeights:
 
 class TestImagePreprocessing:
     def test_original_values(self):
-        actual_source_img = utilities.load_image(SOURCE_IMG_PATH)
+        source_img = utilities.load_image(SOURCE_IMG_PATH)
+        transform = torchvision.transforms.ToTensor()
+        actual_source_img = transform(source_img).permute(1, 2, 0)
 
         with h5py.File(REF_VALS_PATH, 'r') as f:
             expected_source_img = torch.from_numpy(
@@ -231,3 +234,7 @@ class TestLosses:
             expected_loss_value = f['loss_value'][()]
 
             assert actual_loss_value == expected_loss_value
+
+
+blah = TestImagePreprocessing()
+blah.test_preprocessed_values()

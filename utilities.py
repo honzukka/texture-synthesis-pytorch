@@ -4,8 +4,10 @@ import imp
 import inspect
 import importlib
 
-from PIL import Image
+import PIL
 import torchvision
+import torch
+import numpy as np
 
 
 def save_model(model, path):
@@ -84,17 +86,35 @@ def load_model(path):
 
 
 def load_image(path):
-    return Image.open(path)
+    return PIL.Image.open(path)
 
 
-def preprocess_image(image):
-    transform = torchvision.transforms.Compose(
-        [
-            torchvision.transforms.ToTensor()
-        ]
-    )
+def preprocess_image(
+    image: PIL.Image.Image,
+    new_size: int = 256,
+    mean: np.ndarray = np.array([0.40760392,  0.45795686,  0.48501961])
+) -> torch.Tensor:
+    assert isinstance(image, PIL.Image.Image)
 
-    return transform(image)
+    # use PIL here because it resamples properly
+    # (https://twitter.com/jaakkolehtinen/status/1258102168176951299)
+    image = image.resize((new_size, new_size), resample=PIL.Image.LANCZOS)
+
+    # RGB to BGR
+    r, g, b = image.split()
+    image_bgr = PIL.Image.merge('RGB', (b, g, r))
+
+    # normalization
+    image_numpy = np.array(image_bgr, dtype=np.float32) / 255.0
+    image_numpy -= mean
+    image_numpy *= 255.0
+
+    # [H, W, C] -> [N, C, H, W]
+    image_numpy = np.transpose(image_numpy, (2, 0, 1))[None, :, :, :]
+
+    return torch.from_numpy(
+        image_numpy
+    ).to(torch.float32)
 
 
 def gram_matrix(activations):
