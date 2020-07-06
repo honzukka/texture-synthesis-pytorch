@@ -32,6 +32,21 @@ def main(args=None):
     result = optimizer.optimize()
 
     # save result
+    # TODO: what if target image gets resized in the preprocessing step?
+    # target_image_numpy = np.array(utilities.load_image(args.img_path))
+    # result_numpy = result.squeeze().permute(1, 2, 0).numpy()[:, :, ::-1]
+    # result_numpy = (result_numpy - result_numpy.min()) / (result_numpy.max() - result_numpy.min())
+    # final_image = utilities.histogram_matching(
+    #     result_numpy * 255, target_image_numpy
+    # )
+    # # final_image = result_numpy
+    # print(final_image.shape)
+    # print(final_image.min())
+    # print(final_image.max())
+    # PIL.Image.fromarray(final_image.astype(np.uint8)).save(
+    #     os.path.join(args.out_dir, 'output.png')
+    # )
+
     final_image = utilities.postprocess_image(result).numpy()
     final_image_pil = PIL.Image.fromarray((final_image * 255).astype(np.uint8))
     final_image_pil.save(os.path.join(args.out_dir, 'output.png'))
@@ -80,7 +95,7 @@ def parse_arguments():
         '--check',
         dest='checkpoint_every',
         type=int,
-        default=2,
+        default=20,
         help=(
             'The number of iterations between storing progress information '
             'and intermediate values.'
@@ -91,7 +106,7 @@ def parse_arguments():
         '--lim',
         dest='iter_limit',
         type=int,
-        default=10,
+        default=2000,
         help=(
             'The maximum number of iterations to be performed '
             'even if loss keeps falling. -1 means no maximum.'

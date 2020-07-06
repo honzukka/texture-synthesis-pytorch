@@ -7,6 +7,7 @@ import importlib
 import PIL
 import torch
 import numpy as np
+import scipy.interpolate
 
 
 def save_model(model, path):
@@ -121,7 +122,9 @@ def postprocess_image(image: torch.Tensor) -> torch.Tensor:
 
 
 def normalize_image(image: torch.Tensor) -> torch.Tensor:
-    return (image - image.min()) / (image.max() - image.min())
+    assert image.shape[0] == 1 and image.shape[1] == 3
+    image_rgb = torch.flip(image, [1])
+    return (image_rgb - image_rgb.min()) / (image_rgb.max() - image_rgb.min())
 
 
 def gram_matrix(activations: torch.Tensor) -> torch.Tensor:
@@ -133,3 +136,51 @@ def gram_matrix(activations: torch.Tensor) -> torch.Tensor:
 
 def sigmoid(x: torch.Tensor) -> torch.Tensor:
     return 1.0 / (1.0 + torch.exp(-x))
+
+
+# TODO: refactor, cite source
+def histogram_matching(source_img, target_img, n_bins=100):
+    assert (
+        isinstance(source_img, np.ndarray) and
+        isinstance(target_img, np.ndarray)
+    )
+
+    result = np.zeros_like(target_img)
+    for i in range(3):
+        hist, bin_edges = np.histogram(
+            target_img[:, :, i].ravel(), bins=n_bins, density=True
+        )
+        cum_values = np.zeros(bin_edges.shape)
+        cum_values[1:] = np.cumsum(hist * np.diff(bin_edges))
+        inv_cdf = scipy.interpolate.interp1d(
+            cum_values, bin_edges, bounds_error=True
+        )
+        r = np.asarray(uniform_hist(source_img[:, :, i].ravel()))
+        r[r > cum_values.max()] = cum_values.max()
+        result[:, :, i] = inv_cdf(r).reshape(source_img[:, :, i].shape)
+
+    return result
+
+
+# TODO: refactor, cite source
+def uniform_hist(X):
+    '''
+    Maps data distribution onto uniform histogram
+
+    :param X: data vector
+    :return: data vector with uniform histogram
+    '''
+
+    Z = [(x, i) for i, x in enumerate(X)]
+    Z.sort()
+    n = len(Z)
+    Rx = [0] * n
+    start = 0   # starting mark
+    for i in range(1, n):
+        if Z[i][0] != Z[i-1][0]:
+            for j in range(start, i):
+                Rx[Z[j][1]] = float(start + 1 + i) / 2.0
+            start = i
+    for j in range(start, n):
+        Rx[Z[j][1]] = float(start + 1 + n) / 2.0
+    return np.asarray(Rx) / float(len(Rx))

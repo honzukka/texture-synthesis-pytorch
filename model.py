@@ -26,7 +26,7 @@ class Model:
             if name in self.important_layers:
                 handle = layer.register_forward_hook(gram_hook)
                 gram_hook_handles.append(handle)
-        self.net(target_image)
+        self.net(self.target_image)
 
         # register Gram loss hook
         self.gram_loss_hook = GramLossHook(
