@@ -116,8 +116,20 @@ def preprocess_image(
     ).to(torch.float32)
 
 
-def gram_matrix(activations):
+def postprocess_image(image: torch.Tensor) -> torch.Tensor:
+    return normalize_image(image).squeeze().permute(1, 2, 0)
+
+
+def normalize_image(image: torch.Tensor) -> torch.Tensor:
+    return (image - image.min()) / (image.max() - image.min())
+
+
+def gram_matrix(activations: torch.Tensor) -> torch.Tensor:
     b, n, x, y = activations.size()
     activation_matrix = activations.view(b * n, x * y)
     G = torch.mm(activation_matrix, activation_matrix.t())    # gram product
     return G.div(b * n * x * y)     # normalization
+
+
+def sigmoid(x: torch.Tensor) -> torch.Tensor:
+    return 1.0 / (1.0 + torch.exp(-x))

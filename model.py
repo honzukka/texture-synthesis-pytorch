@@ -15,7 +15,7 @@ class Model:
     ):
         self.net = utilities.load_model(path).to(device).eval()
         self.device = device
-        self.target_image = target_image
+        self.target_image = target_image.to(device)
         self.layer_weights = layer_weights
         self.important_layers = important_layers
 
@@ -38,6 +38,14 @@ class Model:
         for name, layer in self.net.named_children():
             if name in self.important_layers:
                 handle = layer.register_forward_hook(self.gram_loss_hook)
+
+        # remove unnecessary layers
+        i = 0
+        for name, layer in self.net.named_children():
+            if name == important_layers[-1]:
+                break
+            i += 1
+        self.net = self.net[:(i + 1)]
 
     def __call__(self, image):
         self.gram_loss_hook.clear()
