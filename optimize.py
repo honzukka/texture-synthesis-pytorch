@@ -39,7 +39,7 @@ class Optimizer:
         self.to_pil = torchvision.transforms.ToPILImage()
 
     def optimize(self) -> torch.Tensor:
-        optimizer = torch.optim.lbfgs.LBFGS(
+        optimizer = torch.optim.LBFGS(
             [self.opt_image.requires_grad_()],
             lr=self.lr, max_iter=self.max_iter, tolerance_grad=0.0,
             tolerance_change=0.0, line_search_fn='strong_wolfe'
