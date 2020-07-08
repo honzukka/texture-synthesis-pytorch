@@ -4,10 +4,11 @@ import imp
 import inspect
 import importlib
 
-import PIL
+import PIL                  # type: ignore
 import torch
-import numpy as np
-import scipy.interpolate
+import torchvision          # type: ignore
+import numpy as np          # type: ignore
+import scipy.interpolate    # type: ignore
 
 
 def save_model(model, path):
@@ -85,7 +86,7 @@ def load_model(path):
     return model
 
 
-def load_image(path):
+def load_image(path: str) -> PIL.Image.Image:
     return PIL.Image.open(path)
 
 
@@ -117,14 +118,32 @@ def preprocess_image(
     ).to(torch.float32)
 
 
-def postprocess_image(image: torch.Tensor) -> torch.Tensor:
-    return normalize_image(image).squeeze().permute(1, 2, 0)
+def postprocess_image(
+    img: torch.Tensor, target_img: PIL.Image.Image
+) -> PIL.Image.Image:
+    assert img.shape[0] == 1 and img.shape[1] == 3
+    assert isinstance(target_img, PIL.Image.Image)
+
+    # resize target image if needed (= if it was resized in preprocessing)
+    source_size = (img.shape[3], img.shape[2])
+    target_size = target_img.size
+    target_img = target_img.resize(source_size, resample=PIL.Image.LANCZOS)
+
+    # convert both source and target to numpy
+    target_img_numpy = np.array(target_img)
+    img_numpy = img.numpy().squeeze().transpose(1, 2, 0)[:, :, ::-1]
+
+    result = histogram_matching(img_numpy, target_img_numpy)
+    result_pil = PIL.Image.fromarray(result.astype(np.uint8))
+    return result_pil.resize(target_size, resample=PIL.Image.LANCZOS)
 
 
-def normalize_image(image: torch.Tensor) -> torch.Tensor:
-    assert image.shape[0] == 1 and image.shape[1] == 3
-    image_rgb = torch.flip(image, [1])
-    return (image_rgb - image_rgb.min()) / (image_rgb.max() - image_rgb.min())
+def postprocess_image_quick(img: torch.Tensor) -> PIL.Image.Image:
+    assert img.shape[0] == 1 and img.shape[1] == 3
+    img_rgb = torch.flip(img, [1])
+    img_norm = (img_rgb - img_rgb.min()) / (img_rgb.max() - img_rgb.min())
+    to_pil = torchvision.transforms.ToPILImage()
+    return to_pil(img_norm.squeeze())
 
 
 def gram_matrix(activations: torch.Tensor) -> torch.Tensor:
@@ -138,8 +157,12 @@ def sigmoid(x: torch.Tensor) -> torch.Tensor:
     return 1.0 / (1.0 + torch.exp(-x))
 
 
-# TODO: refactor, cite source
+def inv_sigmoid(y: torch.Tensor) -> torch.Tensor:
+    return -torch.log((1.0 / y) - 1.0)
+
+
 def histogram_matching(source_img, target_img, n_bins=100):
+    '''Taken from https://github.com/leongatys/DeepTextures'''
     assert (
         isinstance(source_img, np.ndarray) and
         isinstance(target_img, np.ndarray)
@@ -162,20 +185,14 @@ def histogram_matching(source_img, target_img, n_bins=100):
     return result
 
 
-# TODO: refactor, cite source
 def uniform_hist(X):
-    '''
-    Maps data distribution onto uniform histogram
-
-    :param X: data vector
-    :return: data vector with uniform histogram
-    '''
+    '''Taken from https://github.com/leongatys/DeepTextures'''
 
     Z = [(x, i) for i, x in enumerate(X)]
     Z.sort()
     n = len(Z)
     Rx = [0] * n
-    start = 0   # starting mark
+    start = 0
     for i in range(1, n):
         if Z[i][0] != Z[i-1][0]:
             for j in range(start, i):

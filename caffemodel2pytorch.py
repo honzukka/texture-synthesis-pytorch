@@ -13,14 +13,15 @@ import torch.nn.functional as F
 from functools import reduce
 
 try:
-	from urllib.request import urlopen
+	from urllib.request import urlopen		# type: ignore
 except:
-	from urllib2 import urlopen # Python 2 support.
+	# Python 2 support
+	from urllib2 import urlopen				# type: ignore
 
 import google.protobuf.descriptor
 import google.protobuf.descriptor_pool
 import google.protobuf.symbol_database
-import google.protobuf.text_format
+import google.protobuf.text_format			# type: ignore
 from google.protobuf.descriptor import FieldDescriptor as FD
 
 TRAIN = 0
@@ -44,7 +45,7 @@ def initialize(caffe_proto = 'https://raw.githubusercontent.com/BVLC/caffe/maste
 		old_symdb = google.protobuf.symbol_database._DEFAULT
 		google.protobuf.descriptor._message.default_pool = google.protobuf.descriptor_pool.DescriptorPool()
 		google.protobuf.symbol_database._DEFAULT = google.protobuf.symbol_database.SymbolDatabase(pool = google.protobuf.descriptor._message.default_pool)
-		import caffe_pb2 as caffe_pb2
+		import caffe_pb2 as caffe_pb2		# type: ignore
 		google.protobuf.descriptor._message.default_pool = old_pool
 		google.protobuf.symbol_database._DEFAULT = old_symdb
 		sys.modules[__name__ + '.proto'] = sys.modules[__name__]
@@ -131,7 +132,7 @@ class Net(nn.Module):
 
 	def copy_from(self, weights):
 		try:
-			import h5py, numpy
+			import h5py, numpy		# type: ignore
 			state_dict = self.state_dict()
 			for k, v in h5py.File(weights, 'r').items():
 				if k in state_dict:

@@ -1,17 +1,16 @@
+from typing import Optional
 import argparse
 import os
 
 import torch
-import matplotlib.pyplot as plt
-import PIL
-import numpy as np
+import matplotlib.pyplot as plt     # type: ignore
 
 import utilities
 import model
 import optimize
 
 
-def main(args=None):
+def main(args: Optional[argparse.Namespace] = None):
     if args is None:
         args = parse_arguments()
 
@@ -24,40 +23,27 @@ def main(args=None):
     net = model.Model(args.model_path, device, target_image)
 
     # synthesize
-    optimizer = optimize.Optimizer(
-        net,
-        n_iter=args.iter_limit,
-        checkpoint_every=args.checkpoint_every
-    )
+    optimizer = optimize.Optimizer(net, args)
     result = optimizer.optimize()
 
     # save result
-    # TODO: what if target image gets resized in the preprocessing step?
-    # target_image_numpy = np.array(utilities.load_image(args.img_path))
-    # result_numpy = result.squeeze().permute(1, 2, 0).numpy()[:, :, ::-1]
-    # result_numpy = (result_numpy - result_numpy.min()) / (result_numpy.max() - result_numpy.min())
-    # final_image = utilities.histogram_matching(
-    #     result_numpy * 255, target_image_numpy
-    # )
-    # # final_image = result_numpy
-    # print(final_image.shape)
-    # print(final_image.min())
-    # print(final_image.max())
-    # PIL.Image.fromarray(final_image.astype(np.uint8)).save(
-    #     os.path.join(args.out_dir, 'output.png')
-    # )
-
-    final_image = utilities.postprocess_image(result).numpy()
-    final_image_pil = PIL.Image.fromarray((final_image * 255).astype(np.uint8))
-    final_image_pil.save(os.path.join(args.out_dir, 'output.png'))
+    final_image = utilities.postprocess_image(
+        result, utilities.load_image(args.img_path)
+    )
+    final_image.save(os.path.join(args.out_dir, 'output.png'))
 
     # plot loss
-    plt.plot(optimizer.losses)
+    x = list(range(
+        args.checkpoint_every - 1,
+        len(optimizer.losses) * args.checkpoint_every,
+        args.checkpoint_every
+    ))
+    plt.plot(x, optimizer.losses)
     plt.savefig(os.path.join(args.out_dir, 'loss_plot.png'))
     plt.close()
 
     # save intermediate images
-    for i, image in enumerate(optimizer.opt_images_pil):
+    for i, image in enumerate(optimizer.opt_images):
         image.save(
             os.path.join(args.out_dir, 'intermediate_image_{}.png'.format(
                 i * args.checkpoint_every
@@ -65,7 +51,7 @@ def main(args=None):
         )
 
 
-def parse_arguments():
+def parse_arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
@@ -95,7 +81,7 @@ def parse_arguments():
         '--check',
         dest='checkpoint_every',
         type=int,
-        default=20,
+        default=1,
         help=(
             'The number of iterations between storing progress information '
             'and intermediate values.'
@@ -103,14 +89,27 @@ def parse_arguments():
     )
 
     parser.add_argument(
-        '--lim',
-        dest='iter_limit',
+        '-n',
+        dest='n_steps',
         type=int,
-        default=2000,
-        help=(
-            'The maximum number of iterations to be performed '
-            'even if loss keeps falling. -1 means no maximum.'
-        )
+        default=5,
+        help='The maximum number of optimizer steps to be performed.'
+    )
+
+    parser.add_argument(
+        '--iter',
+        dest='max_iter',
+        type=int,
+        default=1,
+        help='The maximum number of iterations within one optimization step.'
+    )
+
+    parser.add_argument(
+        '--lr',
+        dest='lr',
+        type=float,
+        default=1.0,
+        help='Optimizer learning rate.'
     )
 
     return parser.parse_args()

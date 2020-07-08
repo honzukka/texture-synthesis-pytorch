@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Tuple, Union
 
 import torch
 
@@ -30,7 +30,7 @@ class Model:
 
         # register Gram loss hook
         self.gram_loss_hook = GramLossHook(
-            gram_hook.gram_matrices, layer_weights
+            gram_hook.gram_matrices, layer_weights, important_layers
         )
         for handle in gram_hook_handles:    # Gram hook is not needed anymore
             handle.remove()
@@ -47,20 +47,24 @@ class Model:
             i += 1
         self.net = self.net[:(i + 1)]
 
-    def __call__(self, image):
+    def __call__(self, image: torch.Tensor) -> torch.Tensor:
         self.gram_loss_hook.clear()
 
         return self.net(image)
 
-    def get_loss(self):
-        return sum(self.gram_loss_hook.losses)
+    def get_loss(self) -> torch.Tensor:
+        # return sum(self.gram_loss_hook.losses)
+        return torch.stack(self.gram_loss_hook.losses, dim=0).sum(dim=0)
 
 
 class ActivationsHook:
     def __init__(self):
         self.activations = []
 
-    def __call__(self, layer, layer_in, layer_out):
+    def __call__(
+        self, layer: torch.nn.Module, layer_in: Tuple[torch.Tensor],
+        layer_out: torch.Tensor
+    ):
         self.activations.append(layer_out.detach())
 
 
@@ -68,7 +72,10 @@ class GramHook:
     def __init__(self):
         self.gram_matrices = []
 
-    def __call__(self, layer, layer_in, layer_out):
+    def __call__(
+        self, layer: torch.nn.Module, layer_in: Tuple[torch.Tensor],
+        layer_out: torch.Tensor
+    ):
         gram_matrix = utilities.gram_matrix(layer_out.detach())
         self.gram_matrices.append(gram_matrix)
 
@@ -76,19 +83,27 @@ class GramHook:
 class GramLossHook:
     def __init__(
         self, target_gram_matrices: List[torch.Tensor],
-        layer_weights: List[float]
+        layer_weights: List[float], layer_names: List[str]
     ):
         self.target_gram_matrices = target_gram_matrices
         self.layer_weights = [
             weight * (1.0 / 4.0) for weight in layer_weights
         ]
+        self.layer_names = layer_names
+        self.losses: List[torch.Tensor] = []
 
-        self.losses = []
-
-    def __call__(self, layer, layer_in, layer_out):
+    def __call__(
+        self, layer: torch.nn.Module, layer_in: Tuple[torch.Tensor],
+        layer_out: torch.Tensor
+    ):
         i = len(self.losses)
         assert i < len(self.layer_weights)
         assert i < len(self.target_gram_matrices)
+
+        if torch.isnan(layer_out).any():
+            print('NaN in layer {}, NaN already in layer input: {}'.format(
+                self.layer_names[i], torch.isnan(layer_in[0]).any()
+            ))
 
         opt_gram_matrix = utilities.gram_matrix(layer_out)
         loss = self.layer_weights[i] * (

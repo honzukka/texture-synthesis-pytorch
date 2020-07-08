@@ -2,17 +2,18 @@ import argparse
 from collections import OrderedDict
 import os
 from types import SimpleNamespace
+from typing import Optional
 
 import torch
-import torchvision
+import torchvision          # type: ignore
 
 import utilities
-import caffemodel2pytorch
+import caffemodel2pytorch   # type: ignore
 
 
 # the original Caffe model can be found at
 # http://bethgelab.org/media/uploads/deeptextures/vgg_normalised.caffemodel
-def main(args=None):
+def main(args: Optional[argparse.Namespace] = None):
     return_value = True
     if args is None:
         args = parse_arguments()
@@ -75,7 +76,7 @@ def main(args=None):
         return None
 
 
-def parse_arguments():
+def parse_arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )

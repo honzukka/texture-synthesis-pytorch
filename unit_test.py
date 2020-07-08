@@ -1,15 +1,14 @@
-import h5py
+import h5py         # type: ignore
 import torch
-import torchvision
+import torchvision  # type: ignore
 
 import utilities
 from model import Model, ActivationsHook, GramHook
+import optimize
 
 PYTORCH_MODEL_PATH = 'models/VGG19_normalized_avg_pool_pytorch'
 REF_VALS_PATH = 'data/reference_values.hdf5'
 SOURCE_IMG_PATH = 'img/pebbles.jpg'
-
-# TODO: make the tests device-aware
 
 
 class TestModelWeights:
@@ -147,7 +146,7 @@ class TestActivations:
 
         synthesis_model = utilities.load_model(PYTORCH_MODEL_PATH)
 
-        # register hooks to extract the important activations
+        # register hooks to extract the Gram matrices
         hook = GramHook()
         for name, layer in synthesis_model.named_children():
             if name in important_layers:
@@ -186,7 +185,7 @@ class TestActivations:
 
         synthesis_model = utilities.load_model(PYTORCH_MODEL_PATH)
 
-        # register hooks to extract the important activations
+        # register hooks to extract the Gram matrices
         hook = GramHook()
         for name, layer in synthesis_model.named_children():
             if name in important_layers:
@@ -216,7 +215,6 @@ class TestActivations:
                     actual_gram_matrix, expected_gram_matrix, atol=1e-05
                 )
 
-    # TODO: test this on the GPU as well!
     def test_activations_two_consecutive_runs(self):
         important_layers = [
             'relu1_1', 'pool1', 'pool2', 'pool3', 'pool4'
@@ -240,7 +238,7 @@ class TestActivations:
 
             synthesis_model(source_image)
 
-            # save the activations
+            # save activations from the last important layer
             activations.append(hook.activations[-1])
 
         assert torch.equal(activations[0], activations[1]), \
@@ -272,3 +270,61 @@ class TestLosses:
             )
 
             assert torch.allclose(actual_loss_value, expected_loss_value)
+
+    def test_noise_image_multiple_forward_passes(self):
+        noise_image = None
+        with h5py.File(REF_VALS_PATH, 'r') as f:
+            noise_image = torch.from_numpy(
+                f['noise1234'][()]
+            )
+
+        target_image = utilities.preprocess_image(
+            utilities.load_image(SOURCE_IMG_PATH)
+        )
+
+        model = Model(PYTORCH_MODEL_PATH, torch.device('cpu'), target_image)
+
+        model(noise_image)
+        model(noise_image)
+        model(noise_image)
+        actual_loss_value = model.get_loss().detach().cpu()
+
+        with h5py.File(REF_VALS_PATH, 'r') as f:
+            expected_loss_value = torch.tensor(
+                f['loss_value'][()], dtype=torch.float32
+            )
+
+            assert torch.allclose(actual_loss_value, expected_loss_value)
+
+
+class TestSigmoid:
+    def test_range_min(self):
+        target = torch.tensor([-5.4, 2.3, 6.7])
+        sigmoid_func = optimize.Optimizer.get_reparam_func(target)
+
+        values = torch.tensor([-5.6, 0.0, 1.1, 7.1])
+        result = sigmoid_func(values)
+
+        assert result.min() >= target.min()
+
+    def test_range_max(self):
+        target = torch.tensor([-5.4, 2.3, 6.7])
+        sigmoid_func = optimize.Optimizer.get_reparam_func(target)
+
+        values = torch.tensor([-5.6, 0.0, 1.1, 7.1])
+        result = sigmoid_func(values)
+
+        assert result.max() <= target.max()
+
+    def test_inverse(self):
+        torch.manual_seed(1234)
+
+        target = torch.tensor([-86.4, -65.1, -123.5, 34.8, 67.2])
+        sigmoid_func = optimize.Optimizer.get_reparam_func(target)
+        inv_sigmoid_func = optimize.Optimizer.get_inv_reparam_func(target)
+
+        values = torch.randn((10)).clamp(target.min(), target.max())
+        x = inv_sigmoid_func(values)
+        result = sigmoid_func(x)
+
+        assert torch.allclose(values, result, atol=1e-08, rtol=1e-04)
