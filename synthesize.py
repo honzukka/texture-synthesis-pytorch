@@ -92,7 +92,7 @@ def parse_arguments() -> argparse.Namespace:
         '-n',
         dest='n_steps',
         type=int,
-        default=5,
+        default=100,
         help='The maximum number of optimizer steps to be performed.'
     )
 
@@ -100,7 +100,7 @@ def parse_arguments() -> argparse.Namespace:
         '--iter',
         dest='max_iter',
         type=int,
-        default=1,
+        default=20,
         help='The maximum number of iterations within one optimization step.'
     )
 
