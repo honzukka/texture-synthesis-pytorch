@@ -87,7 +87,7 @@ def load_model(path):
 
 
 def load_image(path: str) -> PIL.Image.Image:
-    return PIL.Image.open(path)
+    return PIL.Image.open(path).convert('RGB')
 
 
 def preprocess_image(
