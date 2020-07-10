@@ -60,7 +60,11 @@ def parse_arguments() -> argparse.Namespace:
         '-o',
         dest='out_dir',
         default='output',
-        help='Output directory.'
+        help=(
+            'Output directory. All output will be save into a subdirectory '
+            'within this directory which will be called after the input image '
+            'and will be created if it does not exist yet.'
+        )
     )
 
     parser.add_argument(
@@ -112,7 +116,14 @@ def parse_arguments() -> argparse.Namespace:
         help='Optimizer learning rate.'
     )
 
-    return parser.parse_args()
+    args = parser.parse_args()
+
+    # create output subfolder
+    input_name = os.path.splitext(os.path.basename(args.img_path))[0]
+    args.out_dir = os.path.join(args.out_dir, input_name)
+    os.makedirs(args.out_dir, exist_ok=True)
+
+    return args
 
 
 if __name__ == '__main__':
