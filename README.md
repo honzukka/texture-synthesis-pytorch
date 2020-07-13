@@ -30,13 +30,13 @@ Gatys et. al use pretrained [VGG19](http://www.robots.ox.ac.uk/~vgg/research/ver
 * MaxPool layers are replaced by AvgPool
 * Weights are scaled, so that the mean activation of each filter over images and positions is equal to 1.
 
-Gatys et al. provide the model in Caffe format and here it is converted to PyTorch via the following steps:
+Gatys et al. provide the model in Caffe format and [`convert_model.py`](convert_model.py) converts it to PyTorch via the following steps:
 1.  Weigths are converted from `.caffemodel` to `.pt` using [`caffemodel2pytorch.py`](caffemodel2pytorch.py) which comes from [https://github.com/vadimkantorov/caffemodel2pytorch](https://github.com/vadimkantorov/caffemodel2pytorch).
 2.  Pretrained `torchvision.models.vgg19` is loaded, FC layers are removed and MaxPool replaced by AvgPool
 3. `.pt` weights are loaded into the PyTorch model.
-4. The PyTorch model along with the weights is saved using a custom function into a file called [`VGG19_normalized_avg_pool_pytorch`](models/VGG19_normalized_avg_pool_pytorch).
+4. The PyTorch model along with the weights is saved into a pickle using a custom function called [`VGG19_normalized_avg_pool_pytorch`](models/VGG19_normalized_avg_pool_pytorch).
 
-Dependecies for these conversion scripts are not part of the Conda environment definition file as the converted PyTorch model can be used directly.
+Dependecies for these conversion scripts are not part of the Conda environment definition file because the converted PyTorch model can be used directly.
 
 ## How do you know that the reproduced results are correct?
 
