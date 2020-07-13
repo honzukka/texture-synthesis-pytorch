@@ -47,3 +47,7 @@ A set of [unit tests](unit_test.py) is included in the repository. These tests c
 The texture `img/pebbles.jpg` is from the original paper by Gatys et al. (https://arxiv.org/abs/1505.07376). `img/flowers.png` comes from Pixar 128 texture package (https://renderman.pixar.com/pixar-one-twenty-eight) where it is called `Woven_flower`.
 
 The code is based on the original codebase by Gatys et al. (https://github.com/leongatys/DeepTextures), includes a Caffe to PyTorch converter by Vadim Kantorov (https://github.com/vadimkantorov/caffemodel2pytorch) and a model load/save functionality by Pauli Kemppinen.
+
+# License
+
+Just like the original codebase, this software can only be used for academic or non-commercial purposes.
