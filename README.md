@@ -42,6 +42,8 @@ Dependecies for these conversion scripts are not part of the Conda environment d
 
 A set of [unit tests](unit_test.py) is included in the repository. These tests compare values from the converted PyTorch model with those from the original code. Inputs and expected outputs for these tests are stored in a [separate file](data/reference_values.hdf5).
 
-# Disclaimer
+# Acknowledgements
 
-Like the original code, this software is published for academic and non-commercial use only.
+The texture `img/pebbles.jpg` is from the original paper by Gatys et al. (https://arxiv.org/abs/1505.07376). `img/flowers.png` comes from Pixar 128 texture package (https://renderman.pixar.com/pixar-one-twenty-eight) where it is called `Woven_flower`.
+
+The code is based on the original codebase by Gatys et al. (https://github.com/leongatys/DeepTextures), includes a Caffe to PyTorch converter by Vadim Kantorov (https://github.com/vadimkantorov/caffemodel2pytorch) and a model load/save functionality by Pauli Kemppinen.
