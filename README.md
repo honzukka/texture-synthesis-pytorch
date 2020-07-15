@@ -10,18 +10,16 @@ This is a PyTorch implementation of the *Texture Synthesis Using Convolutional N
 
 ## How can I generate my own texture?
 
-1.  Create a Conda environment using the included [definition file](environment_win_cpu.yml) for Windows + CPU. (Also see [instructions](#how-can-i-run-the-code-on-gpu-or-on-maclinux) for GPU computation and Mac/Linux).
-2.  Run `python synthesis.py` for a run with default arguments. This will generate a pebble texture similar to [this one](img/output_pebbles.png).
-3.  Run `python synthesis.py -h` to see how you can choose your own input textures or tweak the optimizer settings.
+* **CPU Version:** Inside the project folder, run `conda env create -f environment_cpu.yml` to create a Conda environment with all the dependencies. It is recommended to run this command as administrator.
+* **GPU Version:** Inside the project folder, run `conda env create -f environment_gpu.yml` to create a Conda environment with all the dependencies. It is recommended to run this command as administrator. Feel free to modify the `cudatoolkit` version in the `.yml` file, so that it corresponds to your CUDA version.
+* Run `python synthesis.py` for a run with default arguments. This will generate a pebble texture similar to [this one](img/output_pebbles.png).
+* Run `python synthesis.py -h` to see how you can choose your own input textures and tweak the optimizer settings.
 
-## How can I run the code on GPU, or on Mac/Linux?
+## I'm getting a pickle-related error when running the code, what should I do?
 
-Create an empty Conda environment with Python 3.7.7 and install the following dependencies:
-* `conda install pytorch=1.5.1 torchvision=0.6.1 cudatoolkit=10.2 -c pytorch` (replace `cudatoolkit=10.2` with `cpuonly` if you want a CPU version)
-* `conda install -c conda-forge matplotlib=3.2.2`
-* `conda install -c conda-forge scipy=1.5.0`
-* *(optional, needed for unit testing)* `conda install -c conda-forge h5py=2.10.0`
-* *(optional, needed for unit testing)* `conda install -c conda-forge pytest=5.4.3`
+The model is stored in this repository using [Git LFS](https://git-lfs.github.com/). It is therefore recommended to have Git LFS installed in order to fetch the model file. However, it is also possible to [download](models/VGG19_normalized_avg_pool_pytorch) it manually.
+
+This also applies to the [file](data/reference_values.hdf5) containing reference values for unit testing.
 
 ## Can you explain more about the model? What are [`convert_model.py`](convert_model.py) and [`caffemodel2pytorch.py`](caffemodel2pytorch.py) for?
 
