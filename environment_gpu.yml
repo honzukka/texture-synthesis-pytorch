@@ -1,0 +1,14 @@
+name: texture_synthesis_gpu
+channels:
+  - pytorch
+  - defaults
+  - conda-forge
+dependencies:
+  - python=3.7
+  - pytorch=1.5.1
+  - cudatoolkit=10.2
+  - torchvision=0.6
+  - matplotlib=3.2
+  - scipy=1.5
+  - h5py=2.10
+  - pytest=5.4
