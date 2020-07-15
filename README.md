@@ -10,8 +10,8 @@ This is a PyTorch implementation of the *Texture Synthesis Using Convolutional N
 
 ## How can I generate my own texture?
 
-* **CPU Version:** Inside the project folder, run `conda env create -f environment_cpu.yml` to create a Conda environment with all the dependencies. It is recommended to run this command as administrator.
-* **GPU Version:** Inside the project folder, run `conda env create -f environment_gpu.yml` to create a Conda environment with all the dependencies. It is recommended to run this command as administrator. Feel free to modify the `cudatoolkit` version in the `.yml` file, so that it corresponds to your CUDA version.
+* **CPU Version:** Inside the project folder, run `conda env create -f environment_cpu.yml` to create a Conda environment with all the dependencies. It is recommended to run this command as administrator. Activate the environment by running `conda activate texture_synthesis_cpu`.
+* **GPU Version:** Inside the project folder, run `conda env create -f environment_gpu.yml` to create a Conda environment with all the dependencies. It is recommended to run this command as administrator. Feel free to modify the `cudatoolkit` version in the `.yml` file, so that it corresponds to your CUDA version. Activate the environment by running `conda activate texture_synthesis_gpu`.
 * Run `python synthesis.py` for a run with default arguments. This will generate a pebble texture similar to [this one](img/output_pebbles.png).
 * Run `python synthesis.py -h` to see how you can choose your own input textures and tweak the optimizer settings.
 
